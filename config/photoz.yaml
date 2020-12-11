@@ -1,0 +1,21 @@
+default: &DEFAULT
+
+  lr: !!float 0.001
+  momentum: !!float 0.9
+  lr_warmup_epochs: 0
+
+  train_data_path: '/tmp/train*.h5'
+  valid_data_path: '/tmp/valid*.h5'
+  num_data_workers: 6
+  num_classes: 180
+
+  max_epochs: 100
+  batch_size: 256
+  valid_batch_size_per_gpu: 256
+
+  log_to_screen: !!bool True
+  log_to_tensorboard: !!bool True
+  save_checkpoint: !!bool True
+
+bs256:
+  <<: *DEFAULT
