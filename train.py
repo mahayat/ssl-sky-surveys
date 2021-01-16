@@ -28,7 +28,7 @@ class Trainer():
 
     self.model = models.resnet.resnet50(num_channels=params.num_channels, num_classes=params.num_classes).to(self.device)
 
-    self.optimizer = torch.optim.SGD(self.model.parameters(), lr=params.lr, momentum=params.momentum)
+    self.optimizer = torch.optim.SGD(self.model.parameters(), lr=params.lr, momentum=params.momentum, weight_decay=params.weight_decay)
     self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.2, patience=10, mode='min')
     self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
 
