@@ -26,7 +26,7 @@ class Trainer():
     self.valid_data_loader, self.valid_sampler = get_data_loader(params, params.valid_data_path, dist.is_initialized(), load_specz=True, is_train=False)
     logging.info('rank %d, data loader initialized'%params.world_rank)
 
-    self.model = models.resnet.resnet50(num_classes=params.num_classes).to(self.device)
+    self.model = models.resnet.resnet50(num_channels=params.num_channels, num_classes=params.num_classes).to(self.device)
 
     self.optimizer = torch.optim.SGD(self.model.parameters(), lr=params.lr, momentum=params.momentum)
     self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.2, patience=10, mode='min')

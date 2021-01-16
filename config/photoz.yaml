@@ -11,6 +11,7 @@ default: &DEFAULT
   train_data_path: '/tmp/train*.h5'
   valid_data_path: '/tmp/valid*.h5'
   num_data_workers: 6
+  num_channels: 5
 
   # spec-z
   specz_upper_lim: !!float 0.4
