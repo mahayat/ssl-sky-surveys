@@ -30,16 +30,16 @@ class JitterCrop:
 
     return image[(center_x-self.offset):(center_x+self.offset), (center_y-self.offset):(center_y+self.offset)]
 
-def get_data_loader(params, files_pattern, distributed, is_train):
+def get_data_loader(params, files_pattern, distributed, is_train, load_specz):
   if is_train:
     transform = transforms.Compose([RandomRotate(),
-                                    JitterCrop(outdim=64, jitter_lim=4),
+                                    JitterCrop(outdim=params.crop_size, jitter_lim=params.jc_jit_limit),
                                     transforms.ToTensor()])
   else:
-    transform = transforms.Compose([JitterCrop(outdim=64, jitter_lim=0),
+    transform = transforms.Compose([JitterCrop(outdim=params.crop_size, jitter_lim=params.jc_jit_limit),
                                     transforms.ToTensor()])
 
-  dataset = SDSSDataset(params.num_classes, files_pattern, transform)
+  dataset = SDSSDataset(params.num_classes, files_pattern, transform, load_specz, params.specz_upper_lim)
   sampler = DistributedSampler(dataset, shuffle=True) if distributed else None
   dataloader = DataLoader(dataset,
                           batch_size=int(params.batch_size) if is_train else int(params.valid_batch_size_per_gpu),
@@ -52,10 +52,12 @@ def get_data_loader(params, files_pattern, distributed, is_train):
   return dataloader, sampler
 
 class SDSSDataset(Dataset):
-  def __init__(self, num_classes, files_pattern, transform=None):
+  def __init__(self, num_classes, files_pattern, transform, load_specz, specz_upper_lim=None):
     self.num_classes = num_classes
     self.files_pattern = files_pattern
     self.transform = transform
+    self.load_specz = load_specz
+    self.specz_upper_lim = specz_upper_lim
     self._get_files_stats()
 
   def _get_files_stats(self):
@@ -81,13 +83,18 @@ class SDSSDataset(Dataset):
     if not self.files[ifile]:
       self._open_file(ifile)
 
-    specz = self.files[ifile]['specz_redshift'][local_idx]
-    # hard-coded numbers are specific to the dataset used in this tutorial
-    if specz >= 0.4:
-      specz = 0.4 - 1e-6
-    specz_bin = torch.tensor(int(specz//(0.4/self.num_classes)))
+    if self.load_specz:
+      specz = self.files[ifile]['specz_redshift'][local_idx]
+      # hard-coded numbers are specific to the dataset used in this tutorial
+      if specz >= self.specz_upper_lim:
+        specz = self.specz_upper_lim - 1e-6
+      specz_bin = torch.tensor(int(specz//(self.specz_upper_lim/self.num_classes)))
 
     # we flip channel axis because all tranforms we use assume HWC input,
     # last transform, ToTensor, reverts this operation
     image = np.swapaxes(self.files[ifile]['images'][local_idx], 0, 2)
-    return self.transform(image), specz_bin
+
+    if self.load_specz:
+      return self.transform(image), specz_bin
+    else:
+      return self.transform(image)

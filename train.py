@@ -22,8 +22,8 @@ class Trainer():
 
     # first constrcut the dataloader on rank0 in case the data is not downloaded
     logging.info('rank %d, begin data loader init'%params.world_rank)
-    self.train_data_loader, self.train_sampler = get_data_loader(params, params.train_data_path, dist.is_initialized(), is_train=True)
-    self.valid_data_loader, self.valid_sampler = get_data_loader(params, params.valid_data_path, dist.is_initialized(), is_train=False)
+    self.train_data_loader, self.train_sampler = get_data_loader(params, params.train_data_path, dist.is_initialized(), load_specz=True, is_train=True)
+    self.valid_data_loader, self.valid_sampler = get_data_loader(params, params.valid_data_path, dist.is_initialized(), load_specz=True, is_train=False)
     logging.info('rank %d, data loader initialized'%params.world_rank)
 
     self.model = models.resnet.resnet50(num_classes=params.num_classes).to(self.device)

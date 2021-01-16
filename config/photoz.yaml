@@ -1,12 +1,19 @@
 default: &DEFAULT
 
   lr: !!float 0.001
+  # augmentations
+  crop_size: 64
+  jc_jit_limit: 4
+
   momentum: !!float 0.9
   lr_warmup_epochs: 0
 
   train_data_path: '/tmp/train*.h5'
   valid_data_path: '/tmp/valid*.h5'
   num_data_workers: 6
+
+  # spec-z
+  specz_upper_lim: !!float 0.4
   num_classes: 180
 
   max_epochs: 100
