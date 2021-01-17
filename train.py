@@ -101,11 +101,11 @@ class Trainer():
 
       tr_start = time.time()
       self.model.zero_grad()
-      with torch.cuda.amp.autocast(params.amp):
+      with torch.cuda.amp.autocast(self.params.amp):
         outputs = self.model(images)
         loss = self.criterion(outputs, specz_bin)
 
-      if params.amp:
+      if self.params.amp:
         self.grad_scaler.scale(loss).backward()
         self.grad_scaler.step(self.optimizer)
         self.grad_scaler.update()
