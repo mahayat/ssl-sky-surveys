@@ -9,7 +9,7 @@ logging.basicConfig(format='%(levelname)s - %(message)s', level=logging.INFO)
 import models.resnet
 from utils.YParams import YParams
 from utils.data_loader import get_data_loader
-from utils.load_trained_model import load_model
+from utils.load_trained_model import load_experiment
 
 def eval_specz(model, data_loader):
   model.eval()
@@ -36,7 +36,7 @@ if __name__ == '__main__':
   parser.add_argument("--config", default='default', type=str)
   args = parser.parse_args()
 
-  model, params = load_model(os.path.abspath(args.yaml_config), args.config)
+  model, params = load_experiment(os.path.abspath(args.yaml_config), args.config)
   data_loader, _  = get_data_loader(params, params.valid_data_path, distributed=False, load_specz=True, is_train=False)
 
   eval_specz(model, data_loader)

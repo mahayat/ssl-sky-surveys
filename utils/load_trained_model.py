@@ -4,13 +4,12 @@ from collections import OrderedDict
 
 import torch
 import logging
-logging.basicConfig(format='%(levelname)s - %(message)s', level=logging.INFO)
 
 import models.resnet
 from utils.YParams import YParams
 from utils.data_loader import get_data_loader
 
-def load_model(yaml_config_file='./config/photoz.yaml', config='default', device=torch.cuda.current_device()):
+def load_experiment(yaml_config_file='./config/photoz.yaml', config='default', device=torch.cuda.current_device()):
   params = YParams(yaml_config_file, config)
 
   # setup output directory
