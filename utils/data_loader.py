@@ -95,6 +95,6 @@ class SDSSDataset(Dataset):
     image = np.swapaxes(self.files[ifile]['images'][local_idx], 0, 2)
 
     if self.load_specz:
-      return self.transform(image), specz_bin
+      return self.transform(image), specz_bin, torch.tensor(specz)
     else:
       return self.transform(image)

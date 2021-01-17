@@ -93,7 +93,7 @@ class Trainer():
     for i, data in enumerate(self.train_data_loader, 0):
       self.iters += 1
       data_start = time.time()
-      images, labels = map(lambda x: x.to(self.device), data)
+      images, specz_bin = map(lambda x: x.to(self.device), data[:2])
       data_time += time.time() - data_start
 
       tr_start = time.time()
@@ -107,7 +107,7 @@ class Trainer():
 
     # save metrics of last batch
     _, preds = outputs.max(1)
-    acc1 = preds.eq(labels).sum().float()/labels.shape[0]
+    acc1 = preds.eq(specz_bin).sum().float()/specz_bin.shape[0]
     logs = {'loss': loss,
             'acc1': acc1}
 
@@ -126,11 +126,11 @@ class Trainer():
     correct = 0.0
     with torch.no_grad():
       for data in self.valid_data_loader:
-        images, labels = map(lambda x: x.to(self.device), data)
+        images, specz_bin = map(lambda x: x.to(self.device), data[:2])
         outputs = self.model(images)
-        loss += self.criterion(outputs, labels)
+        loss += self.criterion(outputs, specz_bin)
         _, preds = outputs.max(1)
-        correct += preds.eq(labels).sum().float()/labels.shape[0]
+        correct += preds.eq(specz_bin).sum().float()/specz_bin.shape[0]
 
     logs = {'loss': loss/len(self.valid_data_loader),
             'acc1': correct/len(self.valid_data_loader)}
