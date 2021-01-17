@@ -29,7 +29,7 @@ class Trainer():
     self.model = models.resnet.resnet50(num_channels=params.num_channels, num_classes=params.num_classes).to(self.device)
 
     self.optimizer = torch.optim.SGD(self.model.parameters(), lr=params.lr, momentum=params.momentum, weight_decay=params.weight_decay)
-    self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.2, patience=10, mode='min')
+    self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=params.lr_milestones, gamma=0.1)
     self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
     if params.amp:
       self.grad_scaler = torch.cuda.amp.GradScaler()
@@ -66,8 +66,7 @@ class Trainer():
       start = time.time()
       tr_time, data_time, train_logs = self.train_one_epoch()
       valid_time, valid_logs = self.validate_one_epoch()
-      if epoch >= params.lr_warmup_epochs:
-        self.scheduler.step(valid_logs['loss'])
+      self.scheduler.step()
 
       if self.params.world_rank == 0:
         if self.params.save_checkpoint:

@@ -9,6 +9,7 @@ default: &DEFAULT
   momentum: !!float 0.9
   lr_warmup_epochs: 0
   weight_decay: 0.
+  lr_milestones: [60, 90]
 
   train_data_path: '/tmp/train*.h5'
   valid_data_path: '/tmp/valid*.h5'
