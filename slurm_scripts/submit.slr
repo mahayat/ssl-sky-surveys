@@ -17,5 +17,5 @@ time cp /global/cscratch1/sd/mustafa/SDSS/data_20200901/train.h5 /tmp
 time cp /global/cscratch1/sd/mustafa/SDSS/data_20200901/valid.h5 /tmp
 
 srun --nodes=1 --ntasks=1 shifter --env HDF5_USE_FILE_LOCKING=FALSE <<EOF
-python -m torch.distributed.launch --nproc_per_node=4 train.py --config=bs256
+python -m torch.distributed.launch --nproc_per_node=8 train.py --amp --config=bs256
 EOF

@@ -31,6 +31,8 @@ class Trainer():
     self.optimizer = torch.optim.SGD(self.model.parameters(), lr=params.lr, momentum=params.momentum, weight_decay=params.weight_decay)
     self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.2, patience=10, mode='min')
     self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
+    if params.amp:
+      self.grad_scaler = torch.cuda.amp.GradScaler()
 
     if dist.is_initialized():
       self.model = DistributedDataParallel(self.model,
@@ -90,6 +92,7 @@ class Trainer():
     self.epoch += 1
     tr_time = 0
     data_time = 0
+    self.model.train()
     for i, data in enumerate(self.train_data_loader, 0):
       self.iters += 1
       data_start = time.time()
@@ -98,11 +101,17 @@ class Trainer():
 
       tr_start = time.time()
       self.model.zero_grad()
-      self.model.train()
-      outputs = self.model(images)
-      loss = self.criterion(outputs, labels)
-      loss.backward()
-      self.optimizer.step()
+      with torch.cuda.amp.autocast(params.amp):
+        outputs = self.model(images)
+        loss = self.criterion(outputs, specz_bin)
+
+      if params.amp:
+        self.grad_scaler.scale(loss).backward()
+        self.grad_scaler.step(self.optimizer)
+        self.grad_scaler.update()
+      else:
+        loss.backward()
+        self.optimizer.step()
       tr_time += time.time() - tr_start
 
     # save metrics of last batch
@@ -168,9 +177,11 @@ if __name__ == '__main__':
   parser.add_argument("--local_rank", default=0, type=int)
   parser.add_argument("--yaml_config", default='./config/photoz.yaml', type=str)
   parser.add_argument("--config", default='default', type=str)
+  parser.add_argument("--amp", action='store_true')
   args = parser.parse_args()
 
   params = YParams(os.path.abspath(args.yaml_config), args.config)
+  params['amp'] = args.amp
 
   # setup distributed training variables and intialize cluster if using
   params['world_size'] = 1
