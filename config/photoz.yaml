@@ -2,7 +2,7 @@ default: &DEFAULT
 
   # augmentations
   crop_size: 64
-  jc_jit_limit: 4
+  jc_jit_limit: 7
 
   #  optimizer parameters
   lr: !!float 0.004
@@ -21,11 +21,11 @@ default: &DEFAULT
 
   max_epochs: 100
   batch_size: 256
-  valid_batch_size_per_gpu: 256
+  valid_batch_size_per_gpu: 512
 
   log_to_screen: !!bool True
   log_to_tensorboard: !!bool True
   save_checkpoint: !!bool True
 
-bs256:
+baseline:
   <<: *DEFAULT

@@ -36,7 +36,7 @@ def get_data_loader(params, files_pattern, distributed, is_train, load_specz):
                                     JitterCrop(outdim=params.crop_size, jitter_lim=params.jc_jit_limit),
                                     transforms.ToTensor()])
   else:
-    transform = transforms.Compose([JitterCrop(outdim=params.crop_size, jitter_lim=params.jc_jit_limit),
+    transform = transforms.Compose([JitterCrop(outdim=params.crop_size),
                                     transforms.ToTensor()])
 
   dataset = SDSSDataset(params.num_classes, files_pattern, transform, load_specz, params.specz_upper_lim)
