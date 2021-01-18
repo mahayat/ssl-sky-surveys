@@ -55,6 +55,7 @@ class Trainer():
     if self.params.log_to_screen:
       logging.info("Starting Training Loop...")
 
+    best_acc1 = 0.
     for epoch in range(self.startEpoch, self.params.max_epochs):
       if dist.is_initialized():
         self.train_sampler.set_epoch(epoch)
@@ -68,10 +69,13 @@ class Trainer():
       valid_time, valid_logs = self.validate_one_epoch()
       self.scheduler.step()
 
+      is_best_acc1 = valid_logs['acc1'] > best_acc1
+      best_acc1 = max(valid_logs['acc1'], best_acc1)
+
       if self.params.world_rank == 0:
         if self.params.save_checkpoint:
           #checkpoint at the end of every epoch
-          self.save_checkpoint(self.params.checkpoint_path)
+          self.save_checkpoint(self.params.checkpoint_path, is_best=is_best_acc1)
 
       if self.params.log_to_tensorboard:
         self.writer.add_scalar('loss/train', train_logs['loss'], self.epoch) 
@@ -152,7 +156,7 @@ class Trainer():
 
     return valid_time, logs
 
-  def save_checkpoint(self, checkpoint_path, model=None):
+  def save_checkpoint(self, checkpoint_path, is_best=False, model=None):
     """ We intentionally require a checkpoint_dir to be passed
         in order to allow Ray Tune to use this function """
 
@@ -161,6 +165,10 @@ class Trainer():
 
     torch.save({'iters': self.iters, 'epoch': self.epoch, 'model_state': model.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict()}, checkpoint_path)
+
+    if is_best:
+      torch.save({'iters': self.iters, 'epoch': self.epoch, 'model_state': model.state_dict(),
+                  'optimizer_state_dict': self.optimizer.state_dict()}, checkpoint_path.replace('.tar', '_best.tar'))
 
   def restore_checkpoint(self, checkpoint_path):
     """ We intentionally require a checkpoint_dir to be passed
