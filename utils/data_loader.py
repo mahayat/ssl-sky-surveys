@@ -8,6 +8,7 @@ from torch.utils.data.distributed import DistributedSampler
 import torchvision.transforms as transforms
 import skimage.transform
 import h5py
+from utils.sdss_dr12_galactic_reddening import SDSSDR12Reddening
 
 class RandomRotate:
   def __call__(self, image):
@@ -32,14 +33,16 @@ class JitterCrop:
 
 def get_data_loader(params, files_pattern, distributed, is_train, load_specz):
   if is_train:
-    transform = transforms.Compose([RandomRotate(),
+    transform = transforms.Compose([SDSSDR12Reddening(deredden=True),
+                                    RandomRotate(),
                                     JitterCrop(outdim=params.crop_size, jitter_lim=params.jc_jit_limit),
                                     transforms.ToTensor()])
   else:
-    transform = transforms.Compose([JitterCrop(outdim=params.crop_size),
+    transform = transforms.Compose([SDSSDR12Reddening(deredden=True),
+                                    JitterCrop(outdim=params.crop_size),
                                     transforms.ToTensor()])
 
-  dataset = SDSSDataset(params.num_classes, files_pattern, transform, load_specz, params.specz_upper_lim)
+  dataset = SDSSDataset(params.num_classes, files_pattern, transform, load_specz, True, params.specz_upper_lim)
   sampler = DistributedSampler(dataset, shuffle=True) if distributed else None
   dataloader = DataLoader(dataset,
                           batch_size=int(params.batch_size) if is_train else int(params.valid_batch_size_per_gpu),
@@ -52,11 +55,12 @@ def get_data_loader(params, files_pattern, distributed, is_train, load_specz):
   return dataloader, sampler
 
 class SDSSDataset(Dataset):
-  def __init__(self, num_classes, files_pattern, transform, load_specz, specz_upper_lim=None):
+  def __init__(self, num_classes, files_pattern, transform, load_specz, load_ebv, specz_upper_lim=None):
     self.num_classes = num_classes
     self.files_pattern = files_pattern
     self.transform = transform
     self.load_specz = load_specz
+    self.load_ebv = load_ebv
     self.specz_upper_lim = specz_upper_lim
     self._get_files_stats()
 
@@ -94,7 +98,13 @@ class SDSSDataset(Dataset):
     # last transform, ToTensor, reverts this operation
     image = np.swapaxes(self.files[ifile]['images'][local_idx], 0, 2)
 
-    if self.load_specz:
-      return self.transform(image), specz_bin, torch.tensor(specz)
+    if self.load_ebv:
+      ebv = self.files[ifile]['e_bv'][local_idx]
+      out = [image, ebv]
     else:
-      return self.transform(image)
+      out = image
+
+    if self.load_specz:
+      return self.transform(out), specz_bin, torch.tensor(specz)
+    else:
+      return self.transform(out)
