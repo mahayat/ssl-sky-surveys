@@ -16,4 +16,4 @@
 ln -s /global/cscratch1/sd/mustafa/SDSS/data_20200901/valid.h5 /tmp
 
 srun shifter --env PYTHONUSERBASE=$HOME/cori/pytorch_ngc-20.08-tf2-v0_env \
-             python eval_specz.py --config=bs256
+             python eval_specz.py --config=baseline

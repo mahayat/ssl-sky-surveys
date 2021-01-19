@@ -26,7 +26,7 @@ do
   echo "Initializing node # $node_rank, $node"
   srun --nodes=1 --ntasks=1 -w $node shifter --env HDF5_USE_FILE_LOCKING=FALSE --env NCCL_IB_DISABLE=0 --env NCCL_IB_HCA=mlx5_0:1,mlx5_2:1,mlx5_4:1,mlx5_6:1 \
   python -m torch.distributed.launch --nproc_per_node=8 --nnodes=$SLURM_JOB_NUM_NODES --node_rank=$node_rank --master_addr=$master_addr \
-  train.py --config=bs256 &
+  train.py --config=baseline &
 
   pids[${node_rank}]=$!
 done
