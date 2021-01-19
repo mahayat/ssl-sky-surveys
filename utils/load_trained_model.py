@@ -9,7 +9,7 @@ import models.resnet
 from utils.YParams import YParams
 from utils.data_loader import get_data_loader
 
-def load_experiment(yaml_config_file='./config/photoz.yaml', config='default', device=torch.cuda.current_device()):
+def load_experiment(yaml_config_file='./config/photoz.yaml', config='default', load_best_ckpt=True, device=torch.cuda.current_device()):
   params = YParams(yaml_config_file, config)
 
   # setup output directory
@@ -25,17 +25,24 @@ def load_experiment(yaml_config_file='./config/photoz.yaml', config='default', d
     logging.error("%s not found"%params.checkpoint_path)
     exit(1)
 
+  if load_best_ckpt and not os.path.isfile(params.checkpoint_path.replace('.tar', '_best.tar')):
+    logging.warning("No best checkpoint exists, loading last checkpoint instead")
+    load_best_ckpt = False
+
   params.log()
   params['log_to_screen'] = True
 
-  return load(params, device), params
+  return load(params, load_best_ckpt, device), params
 
-def load(params, device=torch.cuda.current_device()):
+def load(params, load_best_ckpt, device=torch.cuda.current_device()):
 
   model = models.resnet.resnet50(num_channels=params.num_channels, num_classes=params.num_classes).to(device)
 
-  logging.info("Loading checkpoint %s"%params.checkpoint_path)
-  restore_checkpoint(model, params.checkpoint_path)
+  ckpt_file = params.checkpoint_path
+  if load_best_ckpt:
+    ckpt_file = ckpt_file.replace('.tar', '_best.tar')
+  logging.info("Loading checkpoint %s"%ckpt_file)
+  restore_checkpoint(model, ckpt_file)
 
   return model
 
