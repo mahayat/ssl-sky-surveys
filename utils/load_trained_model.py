@@ -56,11 +56,24 @@ def restore_checkpoint(model, checkpoint_path):
 
   new_model_state = OrderedDict()
   for key in checkpoint[model_key].keys():
-    if 'module.' in key:
+    if 'encoder' in key:
+      if 'encoder_q' in key:
+        name = str(key).replace('module.encoder_q.', '')
+        new_model_state[name] = checkpoint[model_key][key]
+    elif 'module.' in key:
       name = str(key).replace('module.', '')
       new_model_state[name] = checkpoint[model_key][key]
-    else:
-      new_model_state[key] = checkpoint[model_key][key]
 
-  model.load_state_dict(new_model_state)
+  msg = model.load_state_dict(new_model_state, strict=False)
+  if msg.missing_keys == ['fc.weight', 'fc.bias']:
+    logging.info("Printing a pretrained model without FC layers")
+    model.fc = Identity()
+
   logging.info("Chekpoint loaded. Checkpoint epoch %d"%checkpoint['epoch'])
+
+class Identity(torch.nn.Module):
+  def __init__(self):
+    super(Identity, self).__init__()
+
+  def forward(self, x):
+    return x
