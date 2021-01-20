@@ -27,7 +27,7 @@ def astro_stats(params, pdfs, speczs):
   logging.info('sigma_MAD: {}'.format(np.float32(madstd)))
   logging.info('eta (|del z|>0.05): {}'.format(100*eta))
 
-def eval_specz(model, data_loader, save_pdfs=False):
+def eval_specz(params, model, data_loader, save_pdfs=False):
   model.eval()
 
   device = torch.cuda.current_device()
@@ -78,4 +78,4 @@ if __name__ == '__main__':
   model, params = load_experiment(os.path.abspath(args.yaml_config), args.config)
   data_loader, _  = get_data_loader(params, params.valid_data_path, distributed=False, load_specz=True, is_train=False)
 
-  eval_specz(model, data_loader, True)
+  eval_specz(params, model, data_loader, True)
